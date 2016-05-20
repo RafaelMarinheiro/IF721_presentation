@@ -1,0 +1,1 @@
+Substring(inp, PosPair(AbsolutePosition(inp, -2), RegexPosition(inp, RegexPair(//, /\d+/), -1))

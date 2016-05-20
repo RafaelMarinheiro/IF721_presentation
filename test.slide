@@ -1,0 +1,239 @@
+FlashMeta - PROSE SDK
+PROgram Synthesis by Example 
+20 May 2015
+
+João Pedro Marcolino Cordeiro (jpmc)
+jpmc@cin.ufpe.br
+
+Rafael Farias Marinheiro (rfm3)
+rfm3@cin.ufpe.br
+
+* Agenda
+
+- Trabalhos anteriores e Motivação
+- DSL e Semântica
+- Definição do Problema
+- D4
+- Resultados
+- Limitações
+
+* Trabalhos anteriores e Motivação
+
+* Trabalhos Anteriores
+	
+- FlashFill
+
+.link https://www.youtube.com/watch?v=UccfqwwOCoY
+
+- FlashExtract
+
+.link https://www.youtube.com/watch?v=FEiCb0o1_KU&t=120s
+
+* Motivação
+
+- Exemplos fornecem uma interface intuitiva e poderosa para usuários
+- Criar aplicações de Program Synthesis requer muito tempo de pessoas com muita expertise
+
+FlashMeta é um framework que permite desenvolvedores sem expertise construam poderosas aplicações de/com Program Synthesis.
+
+* DSL e Semântica
+
+* DSL (Doman Specific Language)
+
+O problema de síntese precisa encontrar a sua solução em um espaço de programas. Este conjunto de programa é determinado por uma DSL.
+
+Uma DSL especifica a sintaxe do programa.
+
+* DSL
+
+.code substring.grammar
+
+* DSL
+
+A DSL é definida por uma série de regras que formam uma Gramática Livre de Contexto
+
+Uma DSL deve ser composta exclusivamente por funções puras (cuja saída é determinada exclusivamente pelas entradas)
+
+A DSL deve conter uma regra especial chamada de `@start` que determina a símbolo raíz do conjunto de programas em questão. Além disso, a DSL deve conter um programa especial, demarcado por `@input` cuja saída é o conjunto de dados de entrada
+
+* DSL
+
+.code substring.grammar HLx
+
+* Exemplos de programas
+
+- 5 primeiros caracteres
+.code first_five_characters.prose
+
+- Último caractere
+.code last_character.prose
+
+- Substring com o primeiro par de parenteses
+.code parenthesis.prose
+
+* Semântica
+
+Cada função presente na DSL deve ter sua semântica explicitada. No PROSE SDK, é possível escrever código em C# para implementar a semântica de uma DSL:
+
+.code substring_semantics.cs /START OMIT/,/END OMIT/
+
+* PROSE
+
+O PROSE SDK trás funções que facilitam o parsing e execução de programas cuja gramática foi definida:
+
+.code substring_usage.cs
+
+* Problema
+
+* Definições
+
+Dado um par entrada-saída σ = (α, β), dizemos que um programa *P* satisfaz σ, ou P |= σ, se, e somente se, P[α] = β.
+
+Dado um conjunto de pares entrada-saída σ = (σ_0, σ_1, ..., σ_n), dizemos que um programa *P* satisfaz σ, ou P |= σ, se, e somente se, P |= σ_i para todo 0 <= i <= n
+
+* Problema da Síntese por exemplos
+
+Dada uma DSL *L* associada de uma semântica e dado um conjunto de pares entrada-saída σ, encontre o conjunto de programas *P* tais que *P* pertença a *L* e P |= σ
+
+* Problema da Síntese por exemplos
+
+Existem algumas variações para o problema:
+
+- Encontre algum programa P
+- Encontre todos os programas
+- Dada uma função de Ranking R: L -> Reais, encontre, dentre os programas P que satisfazem σ,  os k melhores programas quando ordenados por R(P).
+
+* Solução trivial
+
+Note que, se há alguma solução para o problema, existe um algoritmo trival para encontrá-la:
+
+Dado que os programas são definidos por uma Gramática Livre de Contexto, é possível fazer uma Busca em Largura na árvore dos programas gerados. Se a solução existir, eventualmente esse algoritmo irá alcançá-la.
+
+Caso a solução não exista, o algoritmo nunca irá parar.
+
+* D4 - Data Driven Domain-Specic Deduction
+
+* D4
+
+- D4 é *Domain-Specific* porque opera sobre uma DSL
+- D4 é *Dedutiva* pois ela utiliza do método da inferência dedutiva para encontrar o conjunto de programas
+- D4 é *Data-Driven* pois opera manipulando o espaço do Domínio/Contra-Domínio ao invés de alterar o espaço dos Programas
+
+* D4
+
+O D4 exige as seguintes informações como entrada:
+
+- Conjunto de Entrada/Saída desejados
+- DSL
+- Conjunto de Witness Functions 
+
+* Witness Functions - Intuição
+
+Suponha que tenhamos que resolver o problema
+
+F(X, Y) = k
+
+onde *F* é uma função da DSL e *k* é um valor conhecido e *X* e *Y* são _programas_. Note que F(X, Y) é um programa
+
+* Witness Functions - Intuição
+
+Suponha que consigamos calcular
+
+F^-1(k) = {(a, b) | F(a, b) = k}
+
+Desse modo, a solução do problema original pode ser reduzida à união das soluções dos problemas ((X = a) ^ (Y = b)).
+
+_Estamos_abusando_da_notação,_fazendo_a_extensão_homomórfica_natural_
+
+Se conseguíssemos construir a inversa de cada Função da DSL, o algoritmo poderia ser resolvido recursivamente.
+
+* Witness Functions - Intuição
+
+Concat(a, b) = "abc"
+
+Concat^-1("abc") = {("abc", ""), ("ab", "c"), ("a", "bc"), ("", "abc")}
+
+* Witness Functions
+
+Ao invés disso, podemos tentar escrever inversas parciais:
+
+F^-1_X(k) = {a | existe b | F(a, b) = k}
+F^-1_Y(k) = {b | existe a | F(a, b) = k}
+
+E reduzir ao conjunto de subproblemas ((X = a) ^ (Y = b)).
+
+* Witness Functions
+
+Concat^-1_X("abc") = {"", "a", "ab", "abc"}
+Concat^-1_Y("abc") = {"", "c", "bc", "abc"}
+
+Problema: Não representa a condicionalidade entre os parâmetros
+
+* Conditional Witness Functions
+
+Construamos então uma função inversa condicional:
+
+F^-1_Y[x](k) = {b | F(x, b) = k}
+
+Note que se tivermos F^-1_X(k) e F^-1_Y[x](k), podemos facilmente construir a inversa de F
+
+Na verdade, se o conjunto de Witness Functions formar um DAG que inclua todos os parâmetros, será possível construir a inversa de F
+
+* Algoritmo
+
+Para resolver F(x0, x1, ..., xn) = k:
+
+- Construa o DAG G de dependência entre as Witness Functions.
+- Faça a ordenação topológiac dos nós de G.
+- Resolva os subproblemas na ordem topológica encontrada.
+
+
+* Resultados
+
+* Completude
+
+.image project.png _ 600
+
+* Tempo de Implementação
+
+.image impl_time.png _ 600
+
+* PROSE SDK
+
+.iframe https://microsoft.github.io/prose/ 500 800
+
+* Exemplos
+
+- WebExtract
+.link https://prose-playground.cloudapp.net/
+
+- Cortana Flight Info
+.image cortana.png _ 400
+
+* Limitações
+
+* Decidibilidade
+
+Escreva Witness Functions para
+
+Poly(a0, a1, a2, ..., an, x0, x1, ..., xn) = k
+
+* Branching Factor
+
+Escreva Witness Functions para
+
+BitOr(a, b) = c
+
+* Performance
+
+Escreva Witness Functions para
+
+Multiply(a, b) = c
+
+* Bibliografia
+
+* Bibliografia
+
+- Polozov, Oleksandr, and Sumit Gulwani. "FlashMeta: A framework for inductive program synthesis." Proceedings of the 2015 ACM SIGPLAN International Conference on Object-Oriented Programming, Systems, Languages, and Applications. ACM, 2015.
+
+- https://microsoft.github.io/prose/

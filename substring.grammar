@@ -1,0 +1,20 @@
+reference 'SubstringExtraction.dll';
+using semantics SubstringExtraction.Semantics;
+language SubstringExtraction;
+
+@input string inp; // HLx
+
+// Extract a substring from 'inp' between positions 'posPair'
+@start string out := Substring(inp, posPair); // HLx
+Tuple<int?, int?> posPair := PositionPair(pos, pos)
+                             = Pair(pos, pos);
+int? pos := // A position at index 'k' (from the left if k >= 0, or from the right if k < 0)
+            AbsolutePosition(inp, k)
+            // A position where two regexes 'positionBoundaries' match to left and to the right,
+            // respectively, and it is the 'k'-th such position
+          | RegexPosition(inp, positionBoundaries, k);
+Tuple<Regex, Regex> positionBoundaries := RegexPair(r, r)
+                                          = Pair(r, r);
+
+Regex r;
+int k;
