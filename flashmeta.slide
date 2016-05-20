@@ -79,7 +79,7 @@ Cada função presente na DSL deve ter sua semântica explicitada. No PROSE SDK,
 
 * PROSE
 
-O PROSE SDK trás funções que facilitam o parsing e execução de programas cuja gramática foi definida:
+O PROSE SDK traz funções que facilitam o parsing e execução de programas cuja gramática foi definida:
 
 .code substring_usage.cs
 
